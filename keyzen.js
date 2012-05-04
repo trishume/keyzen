@@ -1,7 +1,11 @@
-
+var KEEP_SCORES = 10;
 
 var data = {};
 data.chars = " jfkdlsahgyturieowpqbnvmcxz6758493021`-=[]\\;',./ABCDEFGHIJKLMNOPQRSTUVWXYZ~!@#$%^&*()_+{}|:\"<>?";
+
+var save = {};
+save.wpms = [];
+save.accuracies = [];
 
 var sounds = {};
 
@@ -17,6 +21,7 @@ $(document).ready(function() {
     $.getJSON('wordlist.json', function(data) {
         words = new WeightedList(data);
         next_word();
+        //loadData();
         render();
         $(document).keypress(keyHandler);
 
@@ -34,11 +39,27 @@ function generate_word() {
     return words.peek()[0]; // weighted random pick
 }
 
+function word_finished() {
+    // save data from previous word -----
+    var accuracy = ((data.word.length - data.num_errors) / data.word.length) * 100; // in percent
+    save.accuracies.push([accuracy,data.word.length]);
+    if(save.accuracies.length > KEEP_SCORES) save.accuracies.shift();
+    // calculate wpm
+    var minutes = (new Date().getTime() - data.start_time) / (60.0 * 1000.0);
+    var words = data.word.length / 5.0;
+    var wpm = words / minutes;
+    save.wpms.push([wpm,data.word.length]);
+    if(save.wpms.length > KEEP_SCORES) save.wpms.shift();
+}
+
 function next_word() {
     data.word = generate_word();
     data.word_index = 0;
     data.keys_hit = "";
+    data.num_errors = 0;
     data.word_errors = {};
+    data.doneMode = false;
+    data.start_time = new Date().getTime();
 }
 
 
@@ -48,7 +69,7 @@ function keyHandler(e) {
         e.preventDefault();
     }
     if(key == " " && data.doneMode) {
-        data.doneMode = false;
+        word_finished();
         next_word();
         render();
         return;
@@ -66,6 +87,7 @@ function keyHandler(e) {
         // data.in_a_row[data.word[data.word_index]] = 0;
         // data.in_a_row[key] = 0;
         sounds["clack"].play();
+        data.num_errors += 1;
         data.word_errors[data.word_index] = true;
     }
     data.word_index += 1;
@@ -73,23 +95,24 @@ function keyHandler(e) {
         data.doneMode = true;
     }
     render();
-    save();
+    saveData();
 }
 
 
-function save() {
-    localStorage.data = JSON.stringify(data);
+function saveData() {
+    localStorage.data = JSON.stringify(save);
 }
 
 
-function load() {
-    data = JSON.parse(localStorage.data);
+function loadData() {
+    save = JSON.parse(localStorage.data);
 }
 
 
 function render() {
     //render_level();
     render_word();
+    render_info();
     //render_level_bar();
     //render_rigor();
 }
@@ -140,6 +163,26 @@ function render_word() {
     keys_hit += "</span>";
     $("#word").html(word + "<br>" + keys_hit);
 }
+
+function weighted_average(arr) {
+    var sum = 0;
+    var weight_total = 0;
+    for(var x in arr) {
+        var item = arr[x];
+        weight_total += item[1];
+        sum += item[0] * item[1];
+    }
+    return sum / weight_total;
+}
+
+function render_info() {
+    var text = "";
+
+    text += "Recent WPM: " + weighted_average(save.wpms).toPrecision(4) + "&nbsp;"; 
+    text += "Recent Accuracy: " + weighted_average(save.accuracies).toPrecision(5) + "%&nbsp;"; 
+    $("#info-bar").html(text);
+}
+
 /*
 function set_level(l) {
     data.in_a_row = {};
