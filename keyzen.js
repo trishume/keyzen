@@ -2,35 +2,43 @@
 
 var data = {};
 data.chars = " jfkdlsahgyturieowpqbnvmcxz6758493021`-=[]\\;',./ABCDEFGHIJKLMNOPQRSTUVWXYZ~!@#$%^&*()_+{}|:\"<>?";
-data.consecutive = 5;
-data.word_length = 7;
+
+var sounds = {};
+
+var words;
 
 
 $(document).ready(function() {
-    if (localStorage.data != undefined) {
-        load();
+    sounds = {
+        "click": new Audio("click.wav"),
+        "clack": new Audio("clack.wav"),
+        "ding" : new Audio("ding.wav")
+    };
+    $.getJSON('wordlist.json', function(data) {
+        words = new WeightedList(data);
+        next_word();
         render();
-    }
-    else {
-        set_level(1);
-    }
-    $(document).keypress(keyHandler);
+        $(document).keypress(keyHandler);
+
+        /*if (localStorage.data != undefined) {
+            load();
+            render();
+        }
+        else {
+            set_level(1);
+        }*/
+    });
 });
 
+function generate_word() {
+    return words.peek()[0]; // weighted random pick
+}
 
-function set_level(l) {
-    data.in_a_row = {};
-    for(var i = 0; i < data.chars.length; i++) {
-        data.in_a_row[data.chars[i]] = data.consecutive;
-    }
-    data.in_a_row[data.chars[l]] = 0;
-    data.level = l;
-    data.word_index = 0;
-    data.word_errors = {};
+function next_word() {
     data.word = generate_word();
+    data.word_index = 0;
     data.keys_hit = "";
-    save();
-    render();
+    data.word_errors = {};
 }
 
 
@@ -39,38 +47,33 @@ function keyHandler(e) {
     if (data.chars.indexOf(key) > -1){
         e.preventDefault();
     }
+    if(key == " " && data.doneMode) {
+        data.doneMode = false;
+        next_word();
+        render();
+        return;
+    }
+    if(data.doneMode) {
+        sounds["clack"].play();
+        return;
+    }
     data.keys_hit += key;
     if(key == data.word[data.word_index]) {
-        data.in_a_row[key] += 1;
-        (new Audio("click.wav")).play();
+        //data.in_a_row[key] += 1;
+        sounds["click"].play();
     }
     else {
-        data.in_a_row[data.word[data.word_index]] = 0;
-        data.in_a_row[key] = 0;
-        (new Audio("clack.wav")).play();
+        // data.in_a_row[data.word[data.word_index]] = 0;
+        // data.in_a_row[key] = 0;
+        sounds["clack"].play();
         data.word_errors[data.word_index] = true;
     }
     data.word_index += 1;
     if (data.word_index >= data.word.length) {
-        if(get_training_chars().length == 0) {
-            level_up();
-        }
-        data.word = generate_word();
-        data.word_index = 0;
-        data.keys_hit = "";
-        data.word_errors = {};
+        data.doneMode = true;
     }
     render();
     save();
-}
-
-
-function level_up() {
-    if (data.level + 1 <= data.chars.length - 1) {
-        (new Audio('ding.wav')).play();
-    }
-    l = Math.min(data.level + 1, data.chars.length);
-    set_level(l);
 }
 
 
@@ -85,12 +88,80 @@ function load() {
 
 
 function render() {
-    render_level();
+    //render_level();
     render_word();
-    render_level_bar();
-    render_rigor();
+    //render_level_bar();
+    //render_rigor();
 }
 
+function render_word() {
+    var word = "";
+    for (var i = 0; i < data.word.length; i++) {
+        sclass = "normalChar";
+        if (i > data.word_index) {
+            sclass = "normalChar";
+        }
+        else if (i == data.word_index) {
+            sclass = "currentChar";
+        }
+        else if(data.word_errors[i]) {
+            sclass = "errorChar";
+        }
+        else {
+            sclass = "goodChar";
+        }
+        word += "<span class='" + sclass + "'>";
+        if(data.word[i] == " ") {
+            word += "&#9141;"
+        }
+        else if(data.word[i] == "&") {
+            word += "&amp;"
+        }
+        else {
+            word += data.word[i];
+        }
+        word += "</span>";
+    }
+    var keys_hit = "<span class='keys-hit'>";
+    for(var d in data.keys_hit) {
+        if (data.keys_hit[d] == ' ') {
+            keys_hit += "&#9141;";
+        }
+        else if (data.keys_hit[d] == '&') {
+            keys_hit += "&amp;";
+        }
+        else {
+            keys_hit += data.keys_hit[d];
+        }
+    }
+    for(var i = data.word_index; i < data.word.length; i++) {
+        keys_hit += "&nbsp;";
+    }
+    keys_hit += "</span>";
+    $("#word").html(word + "<br>" + keys_hit);
+}
+/*
+function set_level(l) {
+    data.in_a_row = {};
+    for(var i = 0; i < data.chars.length; i++) {
+        data.in_a_row[data.chars[i]] = data.consecutive;
+    }
+    data.in_a_row[data.chars[l]] = 0;
+    data.level = l;
+    data.word_index = 0;
+    data.word_errors = {};
+    data.word = generate_word();
+    data.keys_hit = "";
+    save();
+    render();
+}
+function level_up() {
+    if (data.level + 1 <= data.chars.length - 1) {
+        (new Audio('ding.wav')).play();
+    }
+    l = Math.min(data.level + 1, data.chars.length);
+    set_level(l);
+}
 
 function render_level() {
     var chars = "<span id='level-chars-wrap'>";
@@ -150,53 +221,6 @@ function render_level_bar() {
     
 }   
 
-function render_word() {
-    var word = "";
-    for (var i = 0; i < data.word.length; i++) {
-        sclass = "normalChar";
-        if (i > data.word_index) {
-            sclass = "normalChar";
-        }
-        else if (i == data.word_index) {
-            sclass = "currentChar";
-        }
-        else if(data.word_errors[i]) {
-            sclass = "errorChar";
-        }
-        else {
-            sclass = "goodChar";
-        }
-        word += "<span class='" + sclass + "'>";
-        if(data.word[i] == " ") {
-            word += "&#9141;"
-        }
-        else if(data.word[i] == "&") {
-            word += "&amp;"
-        }
-        else {
-            word += data.word[i];
-        }
-        word += "</span>";
-    }
-    var keys_hit = "<span class='keys-hit'>";
-    for(var d in data.keys_hit) {
-        if (data.keys_hit[d] == ' ') {
-            keys_hit += "&#9141;";
-        }
-        else if (data.keys_hit[d] == '&') {
-            keys_hit += "&amp;";
-        }
-        else {
-            keys_hit += data.keys_hit[d];
-        }
-    }
-    for(var i = data.word_index; i < data.word_length; i++) {
-        keys_hit += "&nbsp;";
-    }
-    keys_hit += "</span>";
-    $("#word").html(word + "<br>" + keys_hit);
-}
-
 
 function generate_word() {
     word = '';
@@ -227,10 +251,7 @@ function get_training_chars() {
     }
     return training_chars;
 }
-
-function choose(a) {
-    return a[Math.floor(Math.random() * a.length)];
-}
+*/
 
 
 
