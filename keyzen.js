@@ -18,12 +18,25 @@ $(document).ready(function() {
         "clack": new Audio("clack.wav"),
         "ding" : new Audio("ding.wav")
     };
-    $.getJSON('wordlist.json', function(data) {
-        words = new WeightedList(data);
+    $.getJSON('wordlist.json', function(jsondata) {
+        words = new WeightedList(jsondata);
         next_word();
         //loadData();
         render();
         $(document).keypress(keyHandler);
+        $(document).keydown(function(e) {
+            if (e.which == 8) { // detect backspace
+                data.word_index = Math.max(0,data.word_index - 1);
+                data.keys_hit = data.keys_hit.substr(0, data.keys_hit.length - 1);
+                if(data.word_errors[data.word_index]) {
+                    data.word_errors[data.word_index] = false;
+                    data.num_errors -= 1;
+                }
+
+                render();
+                e.preventDefault();
+            }
+        });
 
         /*if (localStorage.data != undefined) {
             load();
@@ -65,9 +78,10 @@ function next_word() {
 
 function keyHandler(e) {
     var key = String.fromCharCode(e.which);
-    if (data.chars.indexOf(key) > -1){
-        e.preventDefault();
+    if (data.chars.indexOf(key) < 0){
+        return;
     }
+    e.preventDefault();
     if(key == " " && data.doneMode) {
         word_finished();
         next_word();
