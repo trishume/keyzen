@@ -127,6 +127,17 @@ function saveData() {
 
 function loadData() {
     save = JSON.parse(localStorage.data);
+    if(!save.wpms)
+        save.wpms = [];
+    if(!save.accuracies)
+        save.accuracies = [];
+    if(!save.settings) {
+        save.settings = {
+            words: 1,
+            mode: "measure",
+            target: 40
+        };
+    }
 }
 
 
