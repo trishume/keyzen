@@ -4,13 +4,6 @@ var data = {};
 data.chars = " jfkdlsahgyturieowpqbnvmcxz6758493021`-=[]\\;',./ABCDEFGHIJKLMNOPQRSTUVWXYZ~!@#$%^&*()_+{}|:\"<>?";
 
 var save = {};
-save.wpms = [];
-save.accuracies = [];
-save.settings = {
-    words: 1,
-    mode: "measure",
-    target: 40
-};
 
 var sounds = {};
 
@@ -28,6 +21,7 @@ $(document).ready(function() {
     toggle("words"  ,"Words"     ,[1,2,3,4,5]);
     toggle("mode"   ,"Mode"      ,["measure","speed"]);
     toggle("target" ,"Target WPM",[30,40,45,50,55,60,65,70,75,80,85,90,95,100,105,110]);
+    toggle("need_space"   ,"Need space to advance"      ,["Yes","No"]);
     $.getJSON('wordlist.json', function(jsondata) {
         words = new WeightedList(jsondata);
         next_word();
@@ -113,7 +107,13 @@ function keyHandler(e) {
     data.word_index += 1;
     if (data.word_index >= data.word.length) {
         data.end_time = new Date().getTime();
-        data.doneMode = true;
+        if(save.settings.need_space == "Yes") {
+            data.doneMode = true;
+        } else {
+            word_finished();
+            next_word();
+            render();
+        }
     }
     render();
     saveData();
@@ -135,7 +135,8 @@ function loadData() {
         save.settings = {
             words: 1,
             mode: "measure",
-            target: 40
+            target: 40,
+            need_space: "Yes"
         };
     }
 }
