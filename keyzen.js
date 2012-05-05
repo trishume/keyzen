@@ -6,6 +6,11 @@ data.chars = " jfkdlsahgyturieowpqbnvmcxz6758493021`-=[]\\;',./ABCDEFGHIJKLMNOPQ
 var save = {};
 save.wpms = [];
 save.accuracies = [];
+save.settings = {
+    words: 1,
+    mode: "measure",
+    target: 40
+};
 
 var sounds = {};
 
@@ -16,12 +21,16 @@ $(document).ready(function() {
     sounds = {
         "click": new Audio("click.wav"),
         "clack": new Audio("clack.wav"),
+        "fail": new Audio("fail.wav"),
         "ding" : new Audio("ding.wav")
     };
+    loadData();
+    toggle("words"  ,"Words"     ,[1,2,3,4,5]);
+    toggle("mode"   ,"Mode"      ,["measure","speed"]);
+    toggle("target" ,"Target WPM",[30,40,45,50,55,60,65,70,75,80,85,90,95,100,105,110]);
     $.getJSON('wordlist.json', function(jsondata) {
         words = new WeightedList(jsondata);
         next_word();
-        //loadData();
         render();
         $(document).keypress(keyHandler);
         $(document).keydown(function(e) {
@@ -37,19 +46,12 @@ $(document).ready(function() {
                 e.preventDefault();
             }
         });
-
-        /*if (localStorage.data != undefined) {
-            load();
-            render();
-        }
-        else {
-            set_level(1);
-        }*/
+        window.setInterval(update_target_bar,42);
     });
 });
 
 function generate_word() {
-    return words.peek()[0]; // weighted random pick
+    return words.peek(save.settings.words).join(" "); // weighted random pick
 }
 
 function word_finished() {
@@ -62,7 +64,7 @@ function word_finished() {
     save.accuracies.push([accuracy,data.word.length]);
     if(save.accuracies.length > KEEP_SCORES) save.accuracies.shift();
     // calculate wpm
-    var minutes = (new Date().getTime() - data.start_time) / (60.0 * 1000.0);
+    var minutes = (data.end_time - data.start_time) / (60.0 * 1000.0);
     var words = data.word.length / 5.0;
     var wpm = words / minutes;
     save.wpms.push([wpm,data.word.length]);
@@ -110,6 +112,7 @@ function keyHandler(e) {
     }
     data.word_index += 1;
     if (data.word_index >= data.word.length) {
+        data.end_time = new Date().getTime();
         data.doneMode = true;
     }
     render();
@@ -180,6 +183,22 @@ function render_word() {
     }
     keys_hit += "</span>";
     $("#word").html(word + "<br>" + keys_hit);
+    
+}
+
+function update_target_bar() {
+    var fullWidth = $(".keys-hit").innerWidth();
+    var timeSoFar = new Date().getTime() - data.start_time;
+    var words = data.word.length / 5.0;
+    var fullTime = (words / save.settings.target) * 60 * 1000;
+    var curWidth = (timeSoFar/fullTime) * fullWidth;
+    $("#target-bar").width(Math.min(curWidth,fullWidth));
+
+    if(timeSoFar > fullTime && save.settings.mode == "speed") {
+        sounds["fail"].play();
+        next_word();
+        render();
+    }
 }
 
 function weighted_average(arr) {
@@ -199,6 +218,30 @@ function render_info() {
     text += "Recent WPM: " + weighted_average(save.wpms).toPrecision(4) + "&nbsp;"; 
     text += "Recent Accuracy: " + weighted_average(save.accuracies).toPrecision(5) + "%&nbsp;"; 
     $("#info-bar").html(text);
+}
+
+function toggle(id,name,vals) {
+    var curval = 0;
+    if(save.settings[id] != undefined) {
+        for(var i in vals) {
+            if(vals[i] == save.settings[id]) {
+                curval = i;
+            }
+        }
+    }
+
+    var newToggle = $("<span>" + name +": <span class='toggle' id='settings-toggle-" + id + "'>" + vals[curval] + "</span>&nbsp;&nbsp;</span>");
+    $("#settings").append(newToggle);
+
+    //save.settings[id] = vals[curval];
+    $("#settings-toggle-" + id,newToggle).click(function() {
+        curval += 1;
+        curval = curval % vals.length;
+        $(this).html(vals[curval]);
+        // actually update the setting
+        save.settings[id] = vals[curval];
+        saveData();
+    });
 }
 
 /*

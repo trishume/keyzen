@@ -36,19 +36,20 @@
                 width:100%;
                 height:100%;
             }
-
-            #word {
-                color: #AAA;
+            #word-box {
                 position: absolute;
                 top: 50%;
                 margin-top: -64px;
                 height:128px;
-                font-size: 128px;
+                margin-left: auto;
+                margin-right:auto;
                 width:100%;
                 padding: 0px;
                 text-align: center;
-                margin-left: auto;
-                margin-right:auto;
+            }
+            #word {
+                color: #AAA;
+                font-size: 128px;
                 word-wrap: break-word;
             	text-shadow: 0px 2px 3px #000;
             }
@@ -59,7 +60,7 @@
             	text-shadow: none;
             }
             
-            #next-level {
+            #target-bar {
                 height: 2px;
                 background-color: #f78d1d;
                 margin-left: auto;
@@ -79,19 +80,19 @@
                 color: #AAAAAA;
             }
             
-            #rigor {
+            #settings {
                 font-size: 16px;
                 position: absolute;
-                right: 16px;
                 bottom: 16px;
+                left: 50px;
                 color: #AAA;
                 font-weight: bold;
                 text-align: right;
             }
             
-            #rigor-number {
+            .toggle {
                 color: #000;
-                cursor: hand;
+                cursor: pointer;
             }   
 
             .currentChar {
@@ -118,13 +119,17 @@
             <div id='info-bar'>
             </div>
 
-            <!--<div id='next-level'>
-            </div>-->
-
-            <div id='word'>
+            <div id='word-box'>
+                <span id='target-container'>
+                    <div id='target-bar'>
+                    </div>
+                </span>
+                <div id='word'>
+                </div>
             </div>
             
-            <div id='rigor'>
+            <div id='settings'>
+                
             </div>
 
         </div>        
