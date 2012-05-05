@@ -53,6 +53,10 @@ function generate_word() {
 }
 
 function word_finished() {
+    // satisfying ding ---
+    if(data.num_errors == 0) {
+        sounds["ding"].play();
+    }
     // save data from previous word -----
     var accuracy = ((data.word.length - data.num_errors) / data.word.length) * 100; // in percent
     save.accuracies.push([accuracy,data.word.length]);
