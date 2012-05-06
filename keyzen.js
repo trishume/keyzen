@@ -92,6 +92,9 @@ function keyHandler(e) {
         sounds["clack"].play();
         return;
     }
+    if(key == " " && data.word_index == 0) {
+        return;
+    }
     data.keys_hit += key;
     if(key == data.word[data.word_index]) {
         //data.in_a_row[key] += 1;
