@@ -174,10 +174,10 @@ function render_word() {
             sclass = "goodChar";
         }
         word += "<span class='" + sclass + "'>";
-        if(data.word[i] == " ") {
-            word += "&#9141;"
-        }
-        else if(data.word[i] == "&") {
+        //if(data.word[i] == " ") {
+            //word += "&#9141;"
+        //}
+        if(data.word[i] == "&") {
             word += "&amp;"
         }
         else {
@@ -187,10 +187,10 @@ function render_word() {
     }
     var keys_hit = "<span class='keys-hit'>";
     for(var d in data.keys_hit) {
-        if (data.keys_hit[d] == ' ') {
-            keys_hit += "&#9141;";
-        }
-        else if (data.keys_hit[d] == '&') {
+        //if (data.keys_hit[d] == ' ') {
+            //keys_hit += "&#9141;";
+        //}
+        if (data.keys_hit[d] == '&') {
             keys_hit += "&amp;";
         }
         else {
