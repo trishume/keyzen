@@ -129,8 +129,11 @@ function saveData() {
 
 
 function loadData() {
-    if(!localStorage.data) return;
-    save = JSON.parse(localStorage.data);
+    if(!localStorage.data)
+      save = {};
+    else {
+      save = JSON.parse(localStorage.data);
+    }
     if(!save.wpms)
         save.wpms = [];
     if(!save.accuracies)
