@@ -129,6 +129,7 @@ function saveData() {
 
 
 function loadData() {
+    if(!localStorage.data) return;
     save = JSON.parse(localStorage.data);
     if(!save.wpms)
         save.wpms = [];
@@ -198,7 +199,7 @@ function render_word() {
     }
     keys_hit += "</span>";
     $("#word").html(word + "<br>" + keys_hit);
-    
+
 }
 
 function update_target_bar() {
@@ -230,8 +231,8 @@ function weighted_average(arr) {
 function render_info() {
     var text = "";
 
-    text += "Recent WPM: " + weighted_average(save.wpms).toPrecision(4) + "&nbsp;"; 
-    text += "Recent Accuracy: " + weighted_average(save.accuracies).toPrecision(5) + "%&nbsp;"; 
+    text += "Recent WPM: " + weighted_average(save.wpms).toPrecision(4) + "&nbsp;";
+    text += "Recent Accuracy: " + weighted_average(save.accuracies).toPrecision(5) + "%&nbsp;";
     $("#info-bar").html(text);
 }
 
@@ -337,8 +338,8 @@ function render_level_bar() {
     }
     m = Math.floor($('#level-chars-wrap').innerWidth() * Math.min(1.0, m / data.consecutive));
     $('#next-level').css({'width': '' + m + 'px'});
-    
-}   
+
+}
 
 
 function generate_word() {
