@@ -140,7 +140,7 @@ function loadData() {
         save.accuracies = [];
     if(!save.settings) {
         save.settings = {
-            words: 1,
+            words: 3,
             mode: "measure",
             target: 40,
             need_space: "Yes"
